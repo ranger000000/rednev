@@ -18,6 +18,7 @@
         .change { font-size: 1.2em; }
         .positive { color: green; }
         .negative { color: red; }
+        .closed { color: #888; font-style: italic; }
         #loading { font-size: 1.5em; color: #666; margin: 50px; }
         #error { color: red; margin: 20px; }
         #last-update { font-size: 0.9em; color: #888; margin-top: 30px; }
@@ -25,7 +26,7 @@
 </head>
 <body>
     <h1>Live Silver Miners Dashboard</h1>
-    <div id="loading">Loading live prices...</div>
+    <div id="loading">Loading prices...</div>
     <div id="error"></div>
 
     <div class="section">
@@ -46,100 +47,43 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Your Finnhub key
+        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Double-check this is your real registered key
 
-        const items = {
-            etfs: [
-                {symbol: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
-                {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
-                {symbol: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'}
-            ],
-            producers: [
-                {symbol: 'CDE', name: 'Coeur Mining (CDE)'},
-                {symbol: 'HL', name: 'Hecla Mining (HL)'},
-                {symbol: 'AG', name: 'First Majestic Silver (AG)'},
-                {symbol: 'EXK', name: 'Endeavour Silver (EXK)'},
-                {symbol: 'PAAS', name: 'Pan American Silver (PAAS)'},
-                {symbol: 'FRES.L', name: 'Fresnillo (FRES.L)'},
-                {symbol: 'HOC.L', name: 'Hochschild Mining (HOC.L)'}
-            ],
-            developers: [
-                {symbol: 'HYMC', name: 'Hycroft Mining (HYMC)'},
-                {symbol: 'DSV.TO', name: 'Discovery Silver (DSV.TO)'},
-                {symbol: 'VZLA', name: 'Vizsla Silver (VZLA)'},
-                {symbol: 'USAS', name: 'Americas Gold & Silver (USAS)'},
-                {symbol: 'SCZ.V', name: 'Santacruz Silver (SCZ.V)'},
-                {symbol: 'ABRA.V', name: 'AbraSilver (ABRA.V)'},
-                {symbol: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
-                {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'},
-                {symbol: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
-                {symbol: 'DV.V', name: 'Dolly Varden Silver (DV.V)'},
-                {symbol: 'CKG.V', name: 'Chesapeake Gold (CKG.V)'},
-                {symbol: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'}
-            ]
-        };
+        const items = { /* same as before - your full list */ };
 
         async function fetchAll() {
-            const loading = document.getElementById('loading');
-            const errorEl = document.getElementById('error');
-            errorEl.textContent = '';
+            // ... same fetch logic ...
 
-            try {
-                const promises = [];
-                for (const section in items) {
-                    items[section].forEach(item => {
-                        const url = `https://finnhub.io/api/v1/quote?symbol=\( {item.symbol}&token= \){API_KEY}`;
-                        promises.push(
-                            fetch(url)
-                                .then(r => {
-                                    console.log(`Status for ${item.symbol}: ${r.status}`);  // Debug in console
-                                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                                    return r.json();
-                                })
-                                .then(data => ({item, data}))
-                                .catch(err => {
-                                    console.error(`Error for ${item.symbol}:`, err);
-                                    return {item, error: err.message};
-                                })
-                        );
-                    });
-                }
+            results.forEach(({item, data, error}) => {
+                // ...
 
-                const results = await Promise.all(promises);
+                if (error || !data || data.c == null) {
+                    div.innerHTML = `<div class="name">\( {item.name}</div><div class="price">Error/No data</div><div class="change"> \){error || ''}</div>`;
+                } else {
+                    const price = data.c.toFixed(2);
+                    let changeText = '';
+                    let changeClass = '';
 
-                // Clear grids
-                Object.keys(items).forEach(sec => document.getElementById(sec).innerHTML = '');
-
-                results.forEach(({item, data, error}) => {
-                    const sectionId = ['SILG.L','SILJ','SLVR'].includes(item.symbol) ? 'etfs' :
-                                      ['CDE','HL','AG','EXK','PAAS','FRES.L','HOC.L'].includes(item.symbol) ? 'producers' : 'developers';
-
-                    const container = document.getElementById(sectionId);
-                    const div = document.createElement('div');
-                    div.className = 'item';
-
-                    if (error || !data || data.c === undefined || data.c === 0) {
-                        div.innerHTML = `<div class="name">\( {item.name}</div><div class="price">No data</div><div class="change"> \){error || 'Market closed or unsupported'}</div>`;
+                    if (data.d === 0 && data.dp === 0) {
+                        changeText = 'Market closed';
+                        changeClass = 'closed';
                     } else {
                         const change = (data.d || 0).toFixed(2);
                         const pct = (data.dp || 0).toFixed(2);
-                        const changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : '';
-
-                        div.innerHTML = `
-                            <div class="name">${item.name}</div>
-                            <div class="price">$${data.c.toFixed(2)}</div>
-                            <div class="change \( {changeClass}"> \){change > 0 ? '+' : ''}\( {change} ( \){pct > 0 ? '+' : ''}${pct}%)</div>
-                        `;
+                        changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
+                        changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : '';
                     }
-                    container.appendChild(div);
-                });
 
-                loading.style.display = 'none';
-                document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
-            } catch (err) {
-                errorEl.textContent = 'Major error: ' + err.message;
-                loading.style.display = 'none';
-            }
+                    div.innerHTML = `
+                        <div class="name">${item.name}</div>
+                        <div class="price">$${price}</div>
+                        <div class="change \( {changeClass}"> \){changeText}</div>
+                    `;
+                }
+                // ...
+            });
+
+            // ...
         }
 
         fetchAll();
