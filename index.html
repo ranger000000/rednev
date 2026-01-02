@@ -51,12 +51,12 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'd5c3o99r01qsbmgic6rg';  // Your Finnhub key + secret (treated as token)
+        const API_KEY = 'd5c3o99r01qsbmgic6rg';  // Your Finnhub API key
 
         const items = {
             spot: [
-                {symbol: 'XAGUSD', name: 'Silver Spot (USD/oz)'},
-                {symbol: 'XAUUSD', name: 'Gold Spot (USD/oz)'},
+                {symbol: 'XAG=USD', name: 'Silver Spot (USD/oz)'},  // Correct symbol for metals
+                {symbol: 'XAU=USD', name: 'Gold Spot (USD/oz)'},
                 {symbol: 'GBPUSD', name: 'GBP/USD'}
             ],
             etfs: [
@@ -80,4 +80,23 @@
                 {symbol: 'USAS', name: 'Americas Gold & Silver (USAS)'},
                 {symbol: 'SCZ.V', name: 'Santacruz Silver (SCZ.V)'},
                 {symbol: 'ABRA.V', name: 'AbraSilver (ABRA.V)'},
-                {symbol: 'GGD.TO', name: '
+                {symbol: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
+                {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'},
+                {symbol: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
+                {symbol: 'DV.V', name: 'Dolly Varden Silver (DV.V)'},
+                {symbol: 'CKG.V', name: 'Chesapeake Gold (CKG.V)'},
+                {symbol: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'}
+            ]
+        };
+
+        async function fetchAll() {
+            const loading = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = '';  // Clear previous errors
+
+            try {
+                const promises = [];
+                for (const section in items) {
+                    items[section].forEach(item => {
+                        promises.push(
+                            fetch(`https
