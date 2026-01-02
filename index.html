@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Silver & Gold Dashboard</title>
+    <title>Live Silver Miners Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f4; color: #333; margin: 20px; text-align: center; }
         h1 { font-size: 2em; margin-bottom: 30px; }
@@ -24,14 +24,9 @@
     </style>
 </head>
 <body>
-    <h1>Live Silver & Gold Dashboard</h1>
+    <h1>Live Silver Miners Dashboard</h1>
     <div id="loading">Loading live prices...</div>
     <div id="error"></div>
-
-    <div class="section">
-        <h2>Spot Prices & Forex</h2>
-        <div class="grid" id="spot"></div>
-    </div>
 
     <div class="section">
         <h2>Silver Miner ETFs</h2>
@@ -51,14 +46,9 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'd5c3o99r01qsbmgic6rg';  // Your Finnhub API key
+        const API_KEY = 'd5c3o99r01qsbmgic6rg';  // Your Finnhub key
 
         const items = {
-            spot: [
-                {symbol: 'XAG=USD', name: 'Silver Spot (USD/oz)'},  // Correct symbol for metals
-                {symbol: 'XAU=USD', name: 'Gold Spot (USD/oz)'},
-                {symbol: 'GBPUSD', name: 'GBP/USD'}
-            ],
             etfs: [
                 {symbol: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
                 {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
@@ -92,11 +82,68 @@
         async function fetchAll() {
             const loading = document.getElementById('loading');
             const errorEl = document.getElementById('error');
-            errorEl.textContent = '';  // Clear previous errors
+            errorEl.textContent = '';
 
             try {
                 const promises = [];
                 for (const section in items) {
                     items[section].forEach(item => {
+                        const url = `https://finnhub.io/api/v1/quote?symbol=\( {item.symbol}&token= \){API_KEY}`;
                         promises.push(
-                            fetch(`https
+                            fetch(url)
+                                .then(r => {
+                                    console.log(`Status for ${item.symbol}: ${r.status}`);  // Debug in console
+                                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                                    return r.json();
+                                })
+                                .then(data => ({item, data}))
+                                .catch(err => {
+                                    console.error(`Error for ${item.symbol}:`, err);
+                                    return {item, error: err.message};
+                                })
+                        );
+                    });
+                }
+
+                const results = await Promise.all(promises);
+
+                // Clear grids
+                Object.keys(items).forEach(sec => document.getElementById(sec).innerHTML = '');
+
+                results.forEach(({item, data, error}) => {
+                    const sectionId = ['SILG.L','SILJ','SLVR'].includes(item.symbol) ? 'etfs' :
+                                      ['CDE','HL','AG','EXK','PAAS','FRES.L','HOC.L'].includes(item.symbol) ? 'producers' : 'developers';
+
+                    const container = document.getElementById(sectionId);
+                    const div = document.createElement('div');
+                    div.className = 'item';
+
+                    if (error || !data || data.c === undefined || data.c === 0) {
+                        div.innerHTML = `<div class="name">\( {item.name}</div><div class="price">No data</div><div class="change"> \){error || 'Market closed or unsupported'}</div>`;
+                    } else {
+                        const change = (data.d || 0).toFixed(2);
+                        const pct = (data.dp || 0).toFixed(2);
+                        const changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : '';
+
+                        div.innerHTML = `
+                            <div class="name">${item.name}</div>
+                            <div class="price">$${data.c.toFixed(2)}</div>
+                            <div class="change \( {changeClass}"> \){change > 0 ? '+' : ''}\( {change} ( \){pct > 0 ? '+' : ''}${pct}%)</div>
+                        `;
+                    }
+                    container.appendChild(div);
+                });
+
+                loading.style.display = 'none';
+                document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
+            } catch (err) {
+                errorEl.textContent = 'Major error: ' + err.message;
+                loading.style.display = 'none';
+            }
+        }
+
+        fetchAll();
+        setInterval(fetchAll, 30000);
+    </script>
+</body>
+</html>
