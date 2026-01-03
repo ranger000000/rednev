@@ -13,10 +13,7 @@
         .item { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .name { font-weight: bold; font-size: 1.1em; }
         .price { font-size: 1.8em; margin: 10px 0; }
-        .change { font-size: 1.2em; }
-        .positive { color: green; }
-        .negative { color: red; }
-        .closed { color: #888; font-style: italic; }
+        .change { font-size: 1.2em; color: #888; font-style: italic; }
         #loading { font-size: 1.5em; color: #666; margin: 50px; }
         #last-update { font-size: 0.9em; color: #888; margin-top: 30px; }
     </style>
@@ -43,63 +40,61 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Your key
+        const etfs = ['SILJ', 'SIL', 'SLVR'];
+        const producers = ['PAAS', 'HL', 'CDE', 'AG', 'EXK'];
+        const developers = ['HYMC', 'VZLA', 'USAS', 'ASM'];
 
-        const etfs = [
-            {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
-            {symbol: 'SIL', name: 'SIL (Global X Silver Miners ETF)'},
-            {symbol: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'}
-        ];
+        const nameMap = {
+            'SILJ': 'SILJ (Amplify Junior Silver Miners)',
+            'SIL': 'SIL (Global X Silver Miners ETF)',
+            'SLVR': 'SLVR (Sprott Silver Miners & Physical)',
+            'PAAS': 'Pan American Silver (PAAS)',
+            'HL': 'Hecla Mining (HL)',
+            'CDE': 'Coeur Mining (CDE)',
+            'AG': 'First Majestic Silver (AG)',
+            'EXK': 'Endeavour Silver (EXK)',
+            'HYMC': 'Hycroft Mining (HYMC)',
+            'VZLA': 'Vizsla Silver (VZLA)',
+            'USAS': 'Americas Gold & Silver (USAS)',
+            'ASM': 'Avino Silver & Gold (ASM)'
+        };
 
-        const producers = [
-            {symbol: 'PAAS', name: 'Pan American Silver (PAAS)'},
-            {symbol: 'HL', name: 'Hecla Mining (HL)'},
-            {symbol: 'CDE', name: 'Coeur Mining (CDE)'},
-            {symbol: 'AG', name: 'First Majestic Silver (AG)'},
-            {symbol: 'EXK', name: 'Endeavour Silver (EXK)'}
-        ];
-
-        const developers = [
-            {symbol: 'HYMC', name: 'Hycroft Mining (HYMC)'},
-            {symbol: 'VZLA', name: 'Vizsla Silver (VZLA)'},
-            {symbol: 'USAS', name: 'Americas Gold & Silver (USAS)'},
-            {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'}
-        ];
-
-        async function fetchQuote(symbol) {
-            const url = `https://finnhub.io/api/v1/quote?symbol=\( {symbol}&token= \){API_KEY}`;
-            const response = await fetch(url);
-            if (!response.ok) return null;
-            return await response.json();
+        async function fetchPrice(symbol) {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const result = data.chart.result[0];
+                if (result && result.meta) {
+                    return {
+                        price: result.meta.regularMarketPrice.toFixed(2),
+                        previousClose: result.meta.previousClose.toFixed(2)
+                    };
+                }
+            } catch (err) {
+                return null;
+            }
+            return null;
         }
 
-        async function loadGroup(group, containerId) {
+        async function loadGroup(symbols, containerId) {
             const container = document.getElementById(containerId);
 
-            for (const t of group) {
-                const data = await fetchQuote(t.symbol);
+            for (const symbol of symbols) {
+                const priceData = await fetchPrice(symbol);
 
                 const div = document.createElement('div');
                 div.className = 'item';
 
-                if (!data || !data.c || data.c <= 0) {
-                    div.innerHTML = `<div class="name">${t.name}</div><div class="price">No data</div>`;
+                const name = nameMap[symbol] || symbol;
+
+                if (!priceData) {
+                    div.innerHTML = `<div class="name">${name}</div><div class="price">No data</div>`;
                 } else {
-                    const price = data.c.toFixed(2);
-                    let changeText = 'Market closed';
-                    let changeClass = 'closed';
-
-                    if (data.d && data.dp && (data.d !== 0 || data.dp !== 0)) {
-                        const change = data.d.toFixed(2);
-                        const pct = data.dp.toFixed(2);
-                        changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
-                        changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : 'closed';
-                    }
-
                     div.innerHTML = `
-                        <div class="name">${t.name}</div>
-                        <div class="price">$${price}</div>
-                        <div class="change \( {changeClass}"> \){changeText}</div>
+                        <div class="name">${name}</div>
+                        <div class="price">$${priceData.price}</div>
+                        <div class="change">Last close (market closed)</div>
                     `;
                 }
                 container.appendChild(div);
@@ -107,13 +102,8 @@
         }
 
         async function loadDashboard() {
-            document.getElementById('loading').textContent = 'Loading ETFs...';
             await loadGroup(etfs, 'etfs');
-
-            document.getElementById('loading').textContent = 'Loading Producers...';
             await loadGroup(producers, 'producers');
-
-            document.getElementById('loading').textContent = 'Loading Developers/Juniors...';
             await loadGroup(developers, 'developers');
 
             document.getElementById('loading').style.display = 'none';
