@@ -10,16 +10,10 @@
         .section { margin: 40px auto; max-width: 900px; }
         h2 { font-size: 1.5em; color: #555; margin-bottom: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .item {
-            background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        .item { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .name { font-weight: bold; font-size: 1.1em; }
         .price { font-size: 1.8em; margin: 10px 0; }
-        .change { font-size: 1.2em; }
-        .positive { color: green; }
-        .negative { color: red; }
-        .closed { color: #888; font-style: italic; }
-        .nodata { color: #aaa; }
+        .change { font-size: 1.2em; color: #888; font-style: italic; }
         #loading { font-size: 1.5em; color: #666; margin: 50px; }
         #error { color: red; margin: 20px; }
         #last-update { font-size: 0.9em; color: #888; margin-top: 30px; }
@@ -48,90 +42,74 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  
+        const API_KEY = 'YOUR_POLYGON_KEY_HERE';  // Paste your new Polygon key here
 
         const items = {
             etfs: [
-                {symbol: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
-                {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
-                {symbol: 'AAPL', name: 'Apple Test (AAPL)'},
-                {symbol: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'}
+                {ticker: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
+                {ticker: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
+                {ticker: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'}
             ],
             producers: [
-                {symbol: 'CDE', name: 'Coeur Mining (CDE)'},
-                {symbol: 'HL', name: 'Hecla Mining (HL)'},
-                {symbol: 'AG', name: 'First Majestic Silver (AG)'},
-                {symbol: 'EXK', name: 'Endeavour Silver (EXK)'},
-                {symbol: 'PAAS', name: 'Pan American Silver (PAAS)'},
-                {symbol: 'FRES.L', name: 'Fresnillo (FRES.L)'},
-                {symbol: 'HOC.L', name: 'Hochschild Mining (HOC.L)'}
+                {ticker: 'CDE', name: 'Coeur Mining (CDE)'},
+                {ticker: 'HL', name: 'Hecla Mining (HL)'},
+                {ticker: 'AG', name: 'First Majestic Silver (AG)'},
+                {ticker: 'EXK', name: 'Endeavour Silver (EXK)'},
+                {ticker: 'PAAS', name: 'Pan American Silver (PAAS)'},
+                {ticker: 'FRES.L', name: 'Fresnillo (FRES.L)'},
+                {ticker: 'HOC.L', name: 'Hochschild Mining (HOC.L)'}
             ],
             developers: [
-                {symbol: 'HYMC', name: 'Hycroft Mining (HYMC)'},
-                {symbol: 'DSV.TO', name: 'Discovery Silver (DSV.TO)'},
-                {symbol: 'VZLA', name: 'Vizsla Silver (VZLA)'},
-                {symbol: 'USAS', name: 'Americas Gold & Silver (USAS)'},
-                {symbol: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
-                {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'},
-                {symbol: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
-                {symbol: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'}
+                {ticker: 'HYMC', name: 'Hycroft Mining (HYMC)'},
+                {ticker: 'DSV.TO', name: 'Discovery Silver (DSV.TO)'},
+                {ticker: 'VZLA', name: 'Vizsla Silver (VZLA)'},
+                {ticker: 'USAS', name: 'Americas Gold & Silver (USAS)'},
+                {ticker: 'SCZ.V', name: 'Santacruz Silver (SCZ.V)'},
+                {ticker: 'ABRA.V', name: 'AbraSilver (ABRA.V)'},
+                {ticker: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
+                {ticker: 'ASM', name: 'Avino Silver & Gold (ASM)'},
+                {ticker: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
+                {ticker: 'DV.V', name: 'Dolly Varden Silver (DV.V)'},
+                {ticker: 'CKG.V', name: 'Chesapeake Gold (CKG.V)'},
+                {ticker: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'}
             ]
         };
 
         async function fetchAll() {
             const loading = document.getElementById('loading');
             const errorEl = document.getElementById('error');
-            errorEl.textContent = '';
 
             try {
-                const promises = [];
                 const allItems = [...items.etfs, ...items.producers, ...items.developers];
-                allItems.forEach(item => {
-                    const url = `https://finnhub.io/api/v1/quote?symbol=\( {item.symbol}&token= \){API_KEY}`;
-                    promises.push(
-                        fetch(url)
-                            .then(r => r.json())
-                            .then(data => ({item, data}))
-                            .catch(err => ({item, error: err.message}))
-                    );
-                });
+                const results = [];
 
-                const results = await Promise.all(promises);
+                for (const item of allItems) {
+                    const url = `https://api.polygon.io/v2/last/trade/\( {item.ticker}?apiKey= \){API_KEY}`;
+                    const resp = await fetch(url);
+                    const data = await resp.json();
+                    results.push({item, data});
+                }
 
-                // Clear grids
                 document.getElementById('etfs').innerHTML = '';
                 document.getElementById('producers').innerHTML = '';
                 document.getElementById('developers').innerHTML = '';
 
-                results.forEach(({item, data, error}) => {
-                    const sectionId = items.etfs.includes(item) ? 'etfs' :
-                                      items.producers.includes(item) ? 'producers' : 'developers';
+                results.forEach(({item, data}) => {
+                    const sectionId = items.etfs.some(i => i.ticker === item.ticker) ? 'etfs' :
+                                      items.producers.some(i => i.ticker === item.ticker) ? 'producers' : 'developers';
 
                     const container = document.getElementById(sectionId);
                     const div = document.createElement('div');
                     div.className = 'item';
 
-                    if (error || !data || data.c == null) {
-                        div.innerHTML = `<div class="name">${item.name}</div><div class="price nodata">No data</div>`;
+                    if (data.status !== 'OK' || !data.last || !data.last.price) {
+                        div.innerHTML = `<div class="name">${item.name}</div><div class="price">No data</div>`;
                     } else {
-                        const price = data.c.toFixed(2);
-                        let changeText = '';
-                        let changeClass = '';
-
-                        if ((data.d || 0) === 0 && (data.dp || 0) === 0) {
-                            changeText = 'Market closed';
-                            changeClass = 'closed';
-                        } else {
-                            const change = (data.d || 0).toFixed(2);
-                            const pct = (data.dp || 0).toFixed(2);
-                            changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
-                            changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : '';
-                        }
-
+                        const price = data.last.price.toFixed(2);
                         div.innerHTML = `
                             <div class="name">${item.name}</div>
                             <div class="price">$${price}</div>
-                            <div class="change \( {changeClass}"> \){changeText}</div>
+                            <div class="change">Last close (market closed)</div>
                         `;
                     }
                     container.appendChild(div);
@@ -140,13 +118,13 @@
                 loading.style.display = 'none';
                 document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
             } catch (err) {
-                errorEl.textContent = 'Error: ' + err.message;
+                errorEl.textContent = 'Error loading data – check key';
                 loading.style.display = 'none';
             }
         }
 
         fetchAll();
-        setInterval(fetchAll, 30000);
+        setInterval(fetchAll, 60000);  // Every minute
     </script>
 </body>
 </html>
