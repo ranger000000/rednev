@@ -16,16 +16,15 @@
             max-width: 1700px;
             margin: 0 auto;
         }
-        /* Top row: TradingView (left) | Charts (middle) | Calendar (right) */
+        /* Top row: TradingView (left) | Charts (middle) | Calendar + Map (right) */
         .top-row {
             display: flex;
             gap: 30px;
             flex-wrap: wrap;
             align-items: flex-start;
-            margin-bottom: 60px;
         }
         .left-quotes {
-            flex: 0 0 380px; /* Narrow fixed width to show only Name, Last, Chg, %Chg */
+            flex: 0 0 380px; /* Narrow fixed width */
             min-width: 300px;
         }
         .middle-charts {
@@ -34,10 +33,13 @@
             gap: 20px;
             min-width: 330px;
         }
-        .right-calendar {
+        .right-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
             flex: 1;
             min-width: 500px;
-            max-width: 580px; /* Slightly shrunk calendar */
+            max-width: 580px;
         }
         iframe {
             border: none;
@@ -57,6 +59,13 @@
             margin-top: 10px;
             font-size: 12px;
         }
+        .hycroft-map {
+            width: 100%;
+            max-width: 560px;
+            height: auto;
+            object-fit: contain;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
         /* Mobile: stack vertically */
         @media (max-width: 1300px) {
             .top-row {
@@ -64,7 +73,7 @@
                 align-items: center;
             }
             .left-quotes,
-            .right-calendar {
+            .right-section {
                 width: 100%;
                 max-width: 800px;
             }
@@ -75,16 +84,19 @@
             .middle-charts {
                 align-items: center;
             }
+            .hycroft-map {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="widget-container">
 
-        <!-- Top Row: TradingView (left) | Charts (middle) | Calendar (right) -->
+        <!-- Top Row: TradingView (left) | Charts (middle) | Calendar + Map (right) -->
         <div class="top-row">
 
-            <!-- Left: Narrow TradingView quotes with new Silver GBP ticker -->
+            <!-- Left: Narrow TradingView quotes with Silver GBP -->
             <div class="left-quotes">
                 <div class="tradingview-widget-container">
                     <div class="tradingview-widget-container__widget"></div>
@@ -150,11 +162,11 @@
                 <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=1072285&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
 
                 <!-- Hycroft Mining (HYMC) Chart -->
-                <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=69&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
+                <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=1161111&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
             </div>
 
-            <!-- Right: Slightly narrower Economic Calendar -->
-            <div class="right-calendar">
+            <!-- Right: Calendar + Hycroft Map underneath -->
+            <div class="right-section">
                 <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast&category=_employment,_economicActivity,_inflation,_credit,_centralBanks,_confidenceIndex,_balance,_Bonds&importance=1,2,3&features=datepicker,timezone&countries=37,72,22,17,35,12,4,5&calType=day&timeZone=15&lang=51" width="560" height="467" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
                 <div class="poweredBy">
                     <span style="font-size: 11px;color: #333333;text-decoration: none;">
@@ -162,6 +174,11 @@
                         <a href="https://uk.investing.com/" rel="nofollow" target="_blank" style="font-size: 11px;color: #06529D; font-weight: bold;" class="underline_link">Investing.com UK</a>.
                     </span>
                 </div>
+
+                <!-- Hycroft Mine Location Map -->
+                <img src="hycroft.jpg" alt="Hycroft Mine Location in Nevada" class="hycroft-map">
+                <!-- Replace the src above with your actual hosted image URL on GitHub or Imgur -->
+                <!-- Example: If uploaded to your GitHub repo as images/hycroft-map.png, use src="images/hycroft-map.png" -->
             </div>
 
         </div>
