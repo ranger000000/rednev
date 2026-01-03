@@ -13,31 +13,31 @@
             color: #ffffff;
         }
         .widget-container {
-            max-width: 1600px;
+            max-width: 1700px;
             margin: 0 auto;
         }
-        /* Top row: Charts + Calendar + TradingView (desktop) */
+        /* Top row: TradingView (left) | Charts (middle) | Calendar (right) */
         .top-row {
             display: flex;
             gap: 30px;
             flex-wrap: wrap;
-            margin-bottom: 60px;
             align-items: flex-start;
+            margin-bottom: 60px;
         }
-        .left-charts {
+        .left-quotes {
+            flex: 0 0 380px; /* Narrow fixed width to show only Name, Last, Chg, %Chg */
+            min-width: 300px;
+        }
+        .middle-charts {
             display: flex;
             flex-direction: column;
             gap: 20px;
             min-width: 330px;
         }
-        .calendar-section {
+        .right-calendar {
             flex: 1;
-            min-width: 650px;
-            max-width: 700px;
-        }
-        .right-quotes {
-            flex: 0 0 380px; /* Fixed narrow width for compressed quotes */
-            min-width: 300px;
+            min-width: 500px;
+            max-width: 580px; /* Slightly shrunk calendar */
         }
         iframe {
             border: none;
@@ -45,7 +45,7 @@
         }
         .chart-iframe {
             width: 325px;
-            height: 300px; /* 25% taller than original 240px (240 * 1.25 = 300) */
+            height: 300px;
         }
         .poweredBy {
             text-align: center;
@@ -57,23 +57,22 @@
             margin-top: 10px;
             font-size: 12px;
         }
-        /* Mobile: stack everything vertically */
-        @media (max-width: 1200px) {
+        /* Mobile: stack vertically */
+        @media (max-width: 1300px) {
             .top-row {
                 flex-direction: column;
                 align-items: center;
             }
-            .calendar-section,
-            .right-quotes {
+            .left-quotes,
+            .right-calendar {
                 width: 100%;
                 max-width: 800px;
             }
             .chart-iframe {
                 width: 100%;
                 max-width: 400px;
-                height: 300px;
             }
-            .left-charts {
+            .middle-charts {
                 align-items: center;
             }
         }
@@ -82,31 +81,11 @@
 <body>
     <div class="widget-container">
 
-        <!-- Top Row: Charts (left) | Calendar (middle) | TradingView quotes (right) -->
+        <!-- Top Row: TradingView (left) | Charts (middle) | Calendar (right) -->
         <div class="top-row">
 
-            <!-- Left: Two taller charts stacked -->
-            <div class="left-charts">
-                <!-- Gold Chart -->
-                <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=69&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
-
-                <!-- Silver Chart -->
-                <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=1072285&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
-            </div>
-
-            <!-- Middle: Economic Calendar -->
-            <div class="calendar-section">
-                <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast&category=_employment,_economicActivity,_inflation,_credit,_centralBanks,_confidenceIndex,_balance,_Bonds&importance=1,2,3&features=datepicker,timezone&countries=37,72,22,17,35,12,4,5&calType=day&timeZone=15&lang=51" width="100%" height="467" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
-                <div class="poweredBy">
-                    <span style="font-size: 11px;color: #333333;text-decoration: none;">
-                        Real Time Economic Calendar provided by 
-                        <a href="https://uk.investing.com/" rel="nofollow" target="_blank" style="font-size: 11px;color: #06529D; font-weight: bold;" class="underline_link">Investing.com UK</a>.
-                    </span>
-                </div>
-            </div>
-
-            <!-- Right: Narrow TradingView quotes (no extra columns, tall enough) -->
-            <div class="right-quotes">
+            <!-- Left: Narrow TradingView quotes with new Silver GBP ticker -->
+            <div class="left-quotes">
                 <div class="tradingview-widget-container">
                     <div class="tradingview-widget-container__widget"></div>
                     <div class="tradingview-copyright">
@@ -155,12 +134,33 @@
                                 "name": "Spot Prices",
                                 "symbols": [
                                     { "name": "OANDA:XAGUSD", "displayName": "Silver Spot" },
+                                    { "name": "OANDA:XAGGBP", "displayName": "Silver GBP" },
                                     { "name": "OANDA:XAUUSD", "displayName": "Gold Spot" }
                                 ]
                             }
                         ]
                     }
                     </script>
+                </div>
+            </div>
+
+            <!-- Middle: Two charts (XAG/USD on top, Hycroft below) -->
+            <div class="middle-charts">
+                <!-- Silver Spot XAG/USD Chart -->
+                <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=1072285&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
+
+                <!-- Hycroft Mining (HYMC) Chart -->
+                <iframe class="chart-iframe" src="https://ssltvc.investing.com/?pair_ID=1161111&height=300&width=325&interval=300&plotStyle=candles&domain_ID=51&lang_ID=51&timezone_ID=11"></iframe>
+            </div>
+
+            <!-- Right: Slightly narrower Economic Calendar -->
+            <div class="right-calendar">
+                <iframe src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast&category=_employment,_economicActivity,_inflation,_credit,_centralBanks,_confidenceIndex,_balance,_Bonds&importance=1,2,3&features=datepicker,timezone&countries=37,72,22,17,35,12,4,5&calType=day&timeZone=15&lang=51" width="560" height="467" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
+                <div class="poweredBy">
+                    <span style="font-size: 11px;color: #333333;text-decoration: none;">
+                        Real Time Economic Calendar provided by 
+                        <a href="https://uk.investing.com/" rel="nofollow" target="_blank" style="font-size: 11px;color: #06529D; font-weight: bold;" class="underline_link">Investing.com UK</a>.
+                    </span>
                 </div>
             </div>
 
