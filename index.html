@@ -13,103 +13,75 @@
         .item { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .name { font-weight: bold; font-size: 1.1em; }
         .price { font-size: 1.8em; margin: 10px 0; }
-        .change { font-size: 1.2em; color: #888; font-style: italic; }
+        .change { font-size: 1.2em; }
+        .positive { color: green; }
+        .negative { color: red; }
+        .closed { color: #888; font-style: italic; }
+        .unsupported { color: #aaa; font-style: italic; }
         #loading { font-size: 1.5em; color: #666; margin: 50px; }
-        #error { color: red; margin: 20px; }
         #last-update { font-size: 0.9em; color: #888; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <h1>Live Silver Miners Dashboard</h1>
-    <div id="loading">Loading prices...</div>
-    <div id="error"></div>
+    <h1>Live Silver Miners Dashboard (Finnhub Free Tier)</h1>
+    <div id="loading">Loading reliable tickers...</div>
 
     <div class="section">
-        <h2>Silver Miner ETFs</h2>
-        <div class="grid" id="etfs"></div>
+        <h2>Core Silver Miners & ETFs (Usually Work on Free Tier)</h2>
+        <div class="grid" id="core"></div>
     </div>
 
     <div class="section">
-        <h2>Major Producers</h2>
-        <div class="grid" id="producers"></div>
-    </div>
-
-    <div class="section">
-        <h2>Developers / Juniors</h2>
-        <div class="grid" id="developers"></div>
+        <h2>Other / Juniors (May Show Unsupported on Free Tier)</h2>
+        <div class="grid" id="other"></div>
     </div>
 
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'GmzKAuOdmQTVdVTfovSQ13B1FHCsmupi';  // Your working Polygon key
+        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Your working key
 
-        const groups = {
-            etfs: ['SILG.L', 'SILJ', 'SLVR'],
-            producers: ['CDE', 'HL', 'AG', 'EXK', 'PAAS', 'FRES.L', 'HOC.L'],
-            developers: ['HYMC', 'DSV.TO', 'VZLA', 'USAS', 'SCZ.V', 'ABRA.V', 'GGD.TO', 'ASM', 'AYA.TO', 'DV.V', 'CKG.V', 'JAG.TO']
-        };
+        // Core reliable tickers (US-listed, higher volume – usually return real prices)
+        const coreTickers = [
+            {symbol: 'PAAS', name: 'Pan American Silver (PAAS)'},
+            {symbol: 'HL', name: 'Hecla Mining (HL)'},
+            {symbol: 'CDE', name: 'Coeur Mining (CDE)'},
+            {symbol: 'AG', name: 'First Majestic Silver (AG)'},
+            {symbol: 'EXK', name: 'Endeavour Silver (EXK)'},
+            {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
+            {symbol: 'HYMC', name: 'Hycroft Mining (HYMC)'},
+            {symbol: 'VZLA', name: 'Vizsla Silver (VZLA)'},
+            {symbol: 'USAS', name: 'Americas Gold & Silver (USAS)'},
+            {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'}
+        ];
 
-        async function fetchAll() {
-            const loading = document.getElementById('loading');
-            const errorEl = document.getElementById('error');
+        // Less reliable on free tier (London, Canadian Venture, niche ETFs)
+        const otherTickers = [
+            {symbol: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
+            {symbol: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'},
+            {symbol: 'FRES.L', name: 'Fresnillo (FRES.L)'},
+            {symbol: 'HOC.L', name: 'Hochschild Mining (HOC.L)'},
+            {symbol: 'DSV.TO', name: 'Discovery Silver (DSV.TO)'},
+            {symbol: 'SCZ.V', name: 'Santacruz Silver (SCZ.V)'},
+            {symbol: 'ABRA.V', name: 'AbraSilver (ABRA.V)'},
+            {symbol: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
+            {symbol: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
+            {symbol: 'DV.V', name: 'Dolly Varden Silver (DV.V)'},
+            {symbol: 'CKG.V', name: 'Chesapeake Gold (CKG.V)'},
+            {symbol: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'}
+        ];
 
-            try {
-                const promises = [];
-                for (const section in groups) {
-                    const tickers = groups[section].join(',');
-                    const url = `https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers?tickers=\( {tickers}&apiKey= \){API_KEY}`;
-                    promises.push(fetch(url).then(r => r.json()).then(data => ({section, data})));
-                }
+        async function fetchTickers(tickers, containerId) {
+            const container = document.getElementById(containerId);
 
-                const results = await Promise.all(promises);
+            for (const t of tickers) {
+                try {
+                    const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=\( {t.symbol}&token= \){API_KEY}`);
+                    const data = await response.json();
 
-                // Clear grids
-                Object.keys(groups).forEach(sec => document.getElementById(sec === 'etfs' ? 'etfs' : sec === 'producers' ? 'producers' : 'developers').innerHTML = '');
+                    const div = document.createElement('div');
+                    div.className = 'item';
 
-                results.forEach(({section, data}) => {
-                    const sectionId = section === 'etfs' ? 'etfs' : section === 'producers' ? 'producers' : 'developers';
-                    const container = document.getElementById(sectionId);
-
-                    if (data.status !== 'OK' || !data.tickers) {
-                        errorEl.textContent = 'API error – check key or rate limit';
-                        return;
-                    }
-
-                    data.tickers.forEach(t => {
-                        const div = document.createElement('div');
-                        div.className = 'item';
-
-                        const name = t.ticker === 'SILG.L' ? 'SILG.L (Global X Silver Miners UCITS)' :
-                                     t.ticker === 'SILJ' ? 'SILJ (Amplify Junior Silver Miners)' :
-                                     t.ticker === 'SLVR' ? 'SLVR (Sprott Silver Miners & Physical)' :
-                                     // Add more custom names if needed, or use t.ticker
-                                     t.ticker;
-
-                        if (!t.lastTrade || !t.lastTrade.p) {
-                            div.innerHTML = `<div class="name">${name}</div><div class="price">No data</div>`;
-                        } else {
-                            const price = t.lastTrade.p.toFixed(2);
-                            div.innerHTML = `
-                                <div class="name">${name}</div>
-                                <div class="price">$${price}</div>
-                                <div class="change">Last trade (market closed)</div>
-                            `;
-                        }
-                        container.appendChild(div);
-                    });
-                });
-
-                loading.style.display = 'none';
-                document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
-            } catch (err) {
-                errorEl.textContent = 'Network error – try refreshing';
-                loading.style.display = 'none';
-            }
-        }
-
-        fetchAll();
-        setInterval(fetchAll, 60000);  // Refresh every minute (safe for free tier)
-    </script>
-</body>
-</html>
+                    if (!data || data.c <= 0) {
+                        div.innerHTML = `
+                            <div class="name">${
