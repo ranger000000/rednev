@@ -10,9 +10,7 @@
         .section { margin: 40px auto; max-width: 900px; }
         h2 { font-size: 1.5em; color: #555; margin-bottom: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .item {
-            background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        .item { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .name { font-weight: bold; font-size: 1.1em; }
         .price { font-size: 1.8em; margin: 10px 0; }
         .change { font-size: 1.2em; }
@@ -20,14 +18,12 @@
         .negative { color: red; }
         .closed { color: #888; font-style: italic; }
         #loading { font-size: 1.5em; color: #666; margin: 50px; }
-        #error { color: red; margin: 20px; }
         #last-update { font-size: 0.9em; color: #888; margin-top: 30px; }
     </style>
 </head>
 <body>
     <h1>Live Silver Miners Dashboard</h1>
     <div id="loading">Loading prices...</div>
-    <div id="error"></div>
 
     <div class="section">
         <h2>Silver Miner ETFs</h2>
@@ -47,8 +43,7 @@
     <div id="last-update"></div>
 
     <script>
-        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-        const YAHOO_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Your key
 
         const etfs = [
             {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
@@ -71,52 +66,39 @@
             {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'}
         ];
 
-        async function fetchPrice(symbol) {
-            try {
-                const url = CORS_PROXY + YAHOO_BASE + symbol + '?interval=1d&range=1d';
-                const response = await fetch(url);
-                const data = await response.json();
-                const meta = data.chart.result[0].meta;
-
-                return {
-                    price: meta.regularMarketPrice.toFixed(2),
-                    change: meta.regularMarketChange.toFixed(2),
-                    changePercent: meta.regularMarketChangePercent.toFixed(2),
-                    isClosed: meta.regularMarketChange === 0
-                };
-            } catch (err) {
-                return null;
-            }
+        async function fetchQuote(symbol) {
+            const url = `https://finnhub.io/api/v1/quote?symbol=\( {symbol}&token= \){API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) return null;
+            return await response.json();
         }
 
         async function loadGroup(group, containerId) {
             const container = document.getElementById(containerId);
 
             for (const t of group) {
-                const priceData = await fetchPrice(t.symbol);
+                const data = await fetchQuote(t.symbol);
 
                 const div = document.createElement('div');
                 div.className = 'item';
 
-                if (!priceData) {
-                    div.innerHTML = `
-                        <div class="name">${t.name}</div>
-                        <div class="price unsupported">No data</div>
-                    `;
+                if (!data || !data.c || data.c <= 0) {
+                    div.innerHTML = `<div class="name">${t.name}</div><div class="price">No data</div>`;
                 } else {
+                    const price = data.c.toFixed(2);
                     let changeText = 'Market closed';
                     let changeClass = 'closed';
 
-                    if (!priceData.isClosed) {
-                        const change = priceData.change;
-                        const pct = priceData.changePercent;
+                    if (data.d && data.dp && (data.d !== 0 || data.dp !== 0)) {
+                        const change = data.d.toFixed(2);
+                        const pct = data.dp.toFixed(2);
                         changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
-                        changeClass = change > 0 ? 'positive' : 'negative';
+                        changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : 'closed';
                     }
 
                     div.innerHTML = `
                         <div class="name">${t.name}</div>
-                        <div class="price">$${priceData.price}</div>
+                        <div class="price">$${price}</div>
                         <div class="change \( {changeClass}"> \){changeText}</div>
                     `;
                 }
@@ -125,22 +107,21 @@
         }
 
         async function loadDashboard() {
-            const loading = document.getElementById('loading');
-            loading.textContent = 'Loading ETFs...';
+            document.getElementById('loading').textContent = 'Loading ETFs...';
             await loadGroup(etfs, 'etfs');
 
-            loading.textContent = 'Loading Producers...';
+            document.getElementById('loading').textContent = 'Loading Producers...';
             await loadGroup(producers, 'producers');
 
-            loading.textContent = 'Loading Developers / Juniors...';
+            document.getElementById('loading').textContent = 'Loading Developers/Juniors...';
             await loadGroup(developers, 'developers');
 
-            loading.style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
             document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
         }
 
         loadDashboard();
-        setInterval(loadDashboard, 60000);  // Refresh every minute
+        setInterval(loadDashboard, 60000);
     </script>
 </body>
 </html>
