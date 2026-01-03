@@ -1,85 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Silver Miners Dashboard</title>
-  <style>
-    /* Optional: Center the widget and add some breathing room */
-    body {
-      background-color: #000000;
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-    }
-    .widget-container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Silver Portfolio</title>
+    <style>
+        /* Optional: Center the widgets and add some breathing room */
+        body {
+            background-color: #000000;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+        }
+        .widget-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* Add spacing between the two widgets */
+        .ifc-widget-section {
+            margin-top: 60px;
+        }
+    </style>
 </head>
 <body>
+    <div class="widget-container">
 
-  <div class="widget-container">
-    <!-- TradingView Widget BEGIN -->
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <div class="tradingview-widget-copyright">
-        <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank">
-          <span class="blue-text">Market summary</span>
-        </a>
-        <span class="trademark"> by TradingView</span>
-      </div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
-      {
-        "width": "100%",
-        "height": "600",
-        "colorTheme": "dark",
-        "locale": "en",
-        "isTransparent": false,
-        "showSymbolLogo": true,
-        "backgroundColor": "#0F0F0F",
-        "symbolsGroups": [
-          {
-            "name": "Silver Miner ETFs",
-            "symbols": [
-              { "name": "AMEX:SILJ", "displayName": "Amplify Silver Juniors ETF" },
-              { "name": "NASDAQ:SLVR", "displayName": "Sprott Silver Miners & Physical ETF" },
-              { "name": "AMEX:SIL", "displayName": "Global X Silver Miners ETF (USA)" }
-            ]
-          },
-          {
-            "name": "Silver Producers",
-            "symbols": [
-              { "name": "NYSE:AG", "displayName": "First Majestic" },
-              { "name": "NYSE:HL", "displayName": "Hecla Mining" },
-              { "name": "NYSE:CDE", "displayName": "Coeur Mining" },
-              { "name": "NYSE:PAAS", "displayName": "Pan American Silver" },
-              { "name": "NYSE:EXK", "displayName": "Endeavour Silver" }
-            ]
-          },
-          {
-            "name": "Silver Developers",
-            "symbols": [
-              { "name": "NASDAQ:HYMC", "displayName": "Hycroft Mining" },
-              { "name": "AMEX:VZLA", "displayName": "Vizsla Silver" },
-              { "name": "AMEX:USAS", "displayName": "Americas Gold and Silver" },
-              { "name": "TSX:DSV", "displayName": "Discovery Silver" }
-            ]
-          },
-          {
-            "name": "Spot Prices",
-            "symbols": [
-              { "name": "OANDA:XAGUSD", "displayName": "Silver Spot" },
-              { "name": "OANDA:XAUUSD", "displayName": "Gold Spot" }
-            ]
-          }
-        ]
-      }
-      </script>
+        <!-- TradingView Widget BEGIN -->
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank">
+                    <span class="blue-text">Market summary</span>
+                </a>
+                <span class="trademark"> by TradingView</span>
+            </div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+            {
+                "width": "100%",
+                "height": "600",
+                "colorTheme": "dark",
+                "locale": "en",
+                "isTransparent": false,
+                "showSymbolLogo": true,
+                "backgroundColor": "#0F0F0F",
+                "symbolsGroups": [
+                    {
+                        "name": "Silver Miner ETFs",
+                        "symbols": [
+                            { "name": "AMEX:SILJ", "displayName": "Amplify Silver Juniors ETF" },
+                            { "name": "NASDAQ:SLVR", "displayName": "Sprott Silver Miners & Physical ETF" },
+                            { "name": "AMEX:SIL", "displayName": "Global X Silver Miners ETF (USA)" }
+                        ]
+                    },
+                    {
+                        "name": "Silver Producers",
+                        "symbols": [
+                            { "name": "NYSE:AG", "displayName": "First Majestic" },
+                            { "name": "NYSE:HL", "displayName": "Hecla Mining" },
+                            { "name": "NYSE:CDE", "displayName": "Coeur Mining" },
+                            { "name": "NYSE:PAAS", "displayName": "Pan American Silver" },
+                            { "name": "NYSE:EXK", "displayName": "Endeavour Silver" }
+                        ]
+                    },
+                    {
+                        "name": "Silver Developers",
+                        "symbols": [
+                            { "name": "NASDAQ:HYMC", "displayName": "Hycroft Mining" },
+                            { "name": "AMEX:VZLA", "displayName": "Vizsla Silver" },
+                            { "name": "AMEX:USAS", "displayName": "Americas Gold and Silver" },
+                            { "name": "TSX:DSV", "displayName": "Discovery Silver" }
+                        ]
+                    },
+                    {
+                        "name": "Spot Prices",
+                        "symbols": [
+                            { "name": "OANDA:XAGUSD", "displayName": "Silver Spot" },
+                            { "name": "OANDA:XAUUSD", "displayName": "Gold Spot" }
+                        ]
+                    }
+                ]
+            }
+            </script>
+        </div>
+        <!-- TradingView Widget END -->
+
+        <!-- IFC Markets Live Quotes Widget BEGIN -->
+        <div class="ifc-widget-section">
+            <link rel="stylesheet" type="text/css" media="screen" href="https://www.ifcmarkets.com/css/widget/live_quotes_ifc_widget.css" />
+            <script type="text/javascript">
+                var lang = 'en';
+                var hname = "www.ifcmarkets.com";
+                var bid = 'Bid';
+                var ask = 'Ask';
+                var instrument_list = "EURUSD,GBPUSD,SILG,USDJPY,HOC,FRES,AUDUSD,USDCHF,USDCAD,XAUUSD,XAGUSD";
+                var vi = document.createElement('script');
+                vi.type = 'text/javascript';
+                vi.async = true;
+                vi.src = 'https://www.ifcmarkets.com/js/live_quotes_ifc_widget.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(vi, s);
+            </script>
+            <div id="ifc_widgetlivequotes" class="ifc_widgetlivequotes"></div>
+            <div id="ifc_nedlivequotes" class="ifc_nedlivequotes">
+                <a href="https://www.ifcmarkets.com/en/informers" target="blank" rel="nofollow">Provided</a> by IFC Markets
+            </div>
+        </div>
+        <!-- IFC Markets Live Quotes Widget END -->
+
     </div>
-    <!-- TradingView Widget END -->
-  </div>
-
 </body>
 </html>
