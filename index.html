@@ -1,117 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Silver Miners Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; color: #333; margin: 20px; text-align: center; }
-        h1 { font-size: 2em; margin-bottom: 30px; }
-        .section { margin: 40px auto; max-width: 900px; }
-        h2 { font-size: 1.5em; color: #555; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .item { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .name { font-weight: bold; font-size: 1.1em; }
-        .price { font-size: 1.8em; margin: 10px 0; }
-        .change { font-size: 1.2em; color: #888; font-style: italic; }
-        #loading { font-size: 1.5em; color: #666; margin: 50px; }
-        #last-update { font-size: 0.9em; color: #888; margin-top: 30px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Silver Portfolio</title>
+  <style>
+    /* Optional: Center the widget and add some breathing room */
+    body {
+      background-color: #000000;
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    .widget-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
-    <h1>Live Silver Miners Dashboard</h1>
-    <div id="loading">Loading prices...</div>
 
-    <div class="section">
-        <h2>Silver Miner ETFs</h2>
-        <div class="grid" id="etfs"></div>
+  <div class="widget-container">
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <div class="tradingview-widget-copyright">
+        <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank">
+          <span class="blue-text">Market summary</span>
+        </a>
+        <span class="trademark"> by TradingView</span>
+      </div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+      {
+        "width": "100%",
+        "height": "600",
+        "colorTheme": "dark",
+        "locale": "en",
+        "isTransparent": false,
+        "showSymbolLogo": true,
+        "backgroundColor": "#0F0F0F",
+        "symbolsGroups": [
+          {
+            "name": "Silver Miner ETFs",
+            "symbols": [
+              { "name": "AMEX:SILJ", "displayName": "Amplify Silver Juniors ETF" },
+              { "name": "NASDAQ:SLVR", "displayName": "Sprott Silver Miners & Physical ETF" },
+              { "name": "AMEX:SIL", "displayName": "Global X Silver Miners ETF (USA)" }
+            ]
+          },
+          {
+            "name": "Silver Producers",
+            "symbols": [
+              { "name": "NYSE:AG", "displayName": "First Majestic" },
+              { "name": "NYSE:HL", "displayName": "Hecla Mining" },
+              { "name": "NYSE:CDE", "displayName": "Coeur Mining" },
+              { "name": "NYSE:PAAS", "displayName": "Pan American Silver" },
+              { "name": "NYSE:EXK", "displayName": "Endeavour Silver" }
+            ]
+          },
+          {
+            "name": "Silver Developers",
+            "symbols": [
+              { "name": "NASDAQ:HYMC", "displayName": "Hycroft Mining" },
+              { "name": "AMEX:VZLA", "displayName": "Vizsla Silver" },
+              { "name": "AMEX:USAS", "displayName": "Americas Gold and Silver" },
+              { "name": "TSX:DSV", "displayName": "Discovery Silver" }
+            ]
+          },
+          {
+            "name": "Spot Prices",
+            "symbols": [
+              { "name": "OANDA:XAGUSD", "displayName": "Silver Spot" },
+              { "name": "OANDA:XAUUSD", "displayName": "Gold Spot" }
+            ]
+          }
+        ]
+      }
+      </script>
     </div>
+    <!-- TradingView Widget END -->
+  </div>
 
-    <div class="section">
-        <h2>Major Producers</h2>
-        <div class="grid" id="producers"></div>
-    </div>
-
-    <div class="section">
-        <h2>Developers / Juniors</h2>
-        <div class="grid" id="developers"></div>
-    </div>
-
-    <div id="last-update"></div>
-
-    <script>
-        const etfs = ['SILJ', 'SIL', 'SLVR'];
-        const producers = ['PAAS', 'HL', 'CDE', 'AG', 'EXK'];
-        const developers = ['HYMC', 'VZLA', 'USAS', 'ASM'];
-
-        const nameMap = {
-            'SILJ': 'SILJ (Amplify Junior Silver Miners)',
-            'SIL': 'SIL (Global X Silver Miners ETF)',
-            'SLVR': 'SLVR (Sprott Silver Miners & Physical)',
-            'PAAS': 'Pan American Silver (PAAS)',
-            'HL': 'Hecla Mining (HL)',
-            'CDE': 'Coeur Mining (CDE)',
-            'AG': 'First Majestic Silver (AG)',
-            'EXK': 'Endeavour Silver (EXK)',
-            'HYMC': 'Hycroft Mining (HYMC)',
-            'VZLA': 'Vizsla Silver (VZLA)',
-            'USAS': 'Americas Gold & Silver (USAS)',
-            'ASM': 'Avino Silver & Gold (ASM)'
-        };
-
-        async function fetchPrice(symbol) {
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                const result = data.chart.result[0];
-                if (result && result.meta) {
-                    return {
-                        price: result.meta.regularMarketPrice.toFixed(2),
-                        previousClose: result.meta.previousClose.toFixed(2)
-                    };
-                }
-            } catch (err) {
-                return null;
-            }
-            return null;
-        }
-
-        async function loadGroup(symbols, containerId) {
-            const container = document.getElementById(containerId);
-
-            for (const symbol of symbols) {
-                const priceData = await fetchPrice(symbol);
-
-                const div = document.createElement('div');
-                div.className = 'item';
-
-                const name = nameMap[symbol] || symbol;
-
-                if (!priceData) {
-                    div.innerHTML = `<div class="name">${name}</div><div class="price">No data</div>`;
-                } else {
-                    div.innerHTML = `
-                        <div class="name">${name}</div>
-                        <div class="price">$${priceData.price}</div>
-                        <div class="change">Last close (market closed)</div>
-                    `;
-                }
-                container.appendChild(div);
-            }
-        }
-
-        async function loadDashboard() {
-            await loadGroup(etfs, 'etfs');
-            await loadGroup(producers, 'producers');
-            await loadGroup(developers, 'developers');
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
-        }
-
-        loadDashboard();
-        setInterval(loadDashboard, 60000);
-    </script>
 </body>
 </html>
