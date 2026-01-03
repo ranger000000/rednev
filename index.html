@@ -42,37 +42,12 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'GmzKAuOdmQTVdVTfovSQ13B1FHCsmupi';  // Paste your new Polygon key here
+        const API_KEY = 'GmzKAuOdmQTVdVTfovSQ13B1FHCsmupi';  // Your working Polygon key
 
-        const items = {
-            etfs: [
-                {ticker: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
-                {ticker: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
-                {ticker: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'}
-            ],
-            producers: [
-                {ticker: 'CDE', name: 'Coeur Mining (CDE)'},
-                {ticker: 'HL', name: 'Hecla Mining (HL)'},
-                {ticker: 'AG', name: 'First Majestic Silver (AG)'},
-                {ticker: 'EXK', name: 'Endeavour Silver (EXK)'},
-                {ticker: 'PAAS', name: 'Pan American Silver (PAAS)'},
-                {ticker: 'FRES.L', name: 'Fresnillo (FRES.L)'},
-                {ticker: 'HOC.L', name: 'Hochschild Mining (HOC.L)'}
-            ],
-            developers: [
-                {ticker: 'HYMC', name: 'Hycroft Mining (HYMC)'},
-                {ticker: 'DSV.TO', name: 'Discovery Silver (DSV.TO)'},
-                {ticker: 'VZLA', name: 'Vizsla Silver (VZLA)'},
-                {ticker: 'USAS', name: 'Americas Gold & Silver (USAS)'},
-                {ticker: 'SCZ.V', name: 'Santacruz Silver (SCZ.V)'},
-                {ticker: 'ABRA.V', name: 'AbraSilver (ABRA.V)'},
-                {ticker: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
-                {ticker: 'ASM', name: 'Avino Silver & Gold (ASM)'},
-                {ticker: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
-                {ticker: 'DV.V', name: 'Dolly Varden Silver (DV.V)'},
-                {ticker: 'CKG.V', name: 'Chesapeake Gold (CKG.V)'},
-                {ticker: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'}
-            ]
+        const groups = {
+            etfs: ['SILG.L', 'SILJ', 'SLVR'],
+            producers: ['CDE', 'HL', 'AG', 'EXK', 'PAAS', 'FRES.L', 'HOC.L'],
+            developers: ['HYMC', 'DSV.TO', 'VZLA', 'USAS', 'SCZ.V', 'ABRA.V', 'GGD.TO', 'ASM', 'AYA.TO', 'DV.V', 'CKG.V', 'JAG.TO']
         };
 
         async function fetchAll() {
@@ -80,51 +55,61 @@
             const errorEl = document.getElementById('error');
 
             try {
-                const allItems = [...items.etfs, ...items.producers, ...items.developers];
-                const results = [];
-
-                for (const item of allItems) {
-                    const url = `https://api.polygon.io/v2/last/trade/\( {item.ticker}?apiKey= \){API_KEY}`;
-                    const resp = await fetch(url);
-                    const data = await resp.json();
-                    results.push({item, data});
+                const promises = [];
+                for (const section in groups) {
+                    const tickers = groups[section].join(',');
+                    const url = `https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers?tickers=\( {tickers}&apiKey= \){API_KEY}`;
+                    promises.push(fetch(url).then(r => r.json()).then(data => ({section, data})));
                 }
 
-                document.getElementById('etfs').innerHTML = '';
-                document.getElementById('producers').innerHTML = '';
-                document.getElementById('developers').innerHTML = '';
+                const results = await Promise.all(promises);
 
-                results.forEach(({item, data}) => {
-                    const sectionId = items.etfs.some(i => i.ticker === item.ticker) ? 'etfs' :
-                                      items.producers.some(i => i.ticker === item.ticker) ? 'producers' : 'developers';
+                // Clear grids
+                Object.keys(groups).forEach(sec => document.getElementById(sec === 'etfs' ? 'etfs' : sec === 'producers' ? 'producers' : 'developers').innerHTML = '');
 
+                results.forEach(({section, data}) => {
+                    const sectionId = section === 'etfs' ? 'etfs' : section === 'producers' ? 'producers' : 'developers';
                     const container = document.getElementById(sectionId);
-                    const div = document.createElement('div');
-                    div.className = 'item';
 
-                    if (data.status !== 'OK' || !data.last || !data.last.price) {
-                        div.innerHTML = `<div class="name">${item.name}</div><div class="price">No data</div>`;
-                    } else {
-                        const price = data.last.price.toFixed(2);
-                        div.innerHTML = `
-                            <div class="name">${item.name}</div>
-                            <div class="price">$${price}</div>
-                            <div class="change">Last close (market closed)</div>
-                        `;
+                    if (data.status !== 'OK' || !data.tickers) {
+                        errorEl.textContent = 'API error – check key or rate limit';
+                        return;
                     }
-                    container.appendChild(div);
+
+                    data.tickers.forEach(t => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+
+                        const name = t.ticker === 'SILG.L' ? 'SILG.L (Global X Silver Miners UCITS)' :
+                                     t.ticker === 'SILJ' ? 'SILJ (Amplify Junior Silver Miners)' :
+                                     t.ticker === 'SLVR' ? 'SLVR (Sprott Silver Miners & Physical)' :
+                                     // Add more custom names if needed, or use t.ticker
+                                     t.ticker;
+
+                        if (!t.lastTrade || !t.lastTrade.p) {
+                            div.innerHTML = `<div class="name">${name}</div><div class="price">No data</div>`;
+                        } else {
+                            const price = t.lastTrade.p.toFixed(2);
+                            div.innerHTML = `
+                                <div class="name">${name}</div>
+                                <div class="price">$${price}</div>
+                                <div class="change">Last trade (market closed)</div>
+                            `;
+                        }
+                        container.appendChild(div);
+                    });
                 });
 
                 loading.style.display = 'none';
                 document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
             } catch (err) {
-                errorEl.textContent = 'Error loading data – check key';
+                errorEl.textContent = 'Network error – try refreshing';
                 loading.style.display = 'none';
             }
         }
 
         fetchAll();
-        setInterval(fetchAll, 60000);  // Every minute
+        setInterval(fetchAll, 60000);  // Refresh every minute (safe for free tier)
     </script>
 </body>
 </html>
