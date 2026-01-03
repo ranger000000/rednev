@@ -47,7 +47,8 @@
     <div id="last-update"></div>
 
     <script>
-        const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Your Finnhub key
+        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+        const YAHOO_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
 
         const etfs = [
             {symbol: 'SILJ', name: 'SILJ (Amplify Junior Silver Miners)'},
@@ -70,55 +71,56 @@
             {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'}
         ];
 
-        async function fetchQuote(symbol) {
-            const url = `https://finnhub.io/api/v1/quote?symbol=\( {symbol}&token= \){API_KEY}`;
-            const response = await fetch(url);
-            return await response.json();
+        async function fetchPrice(symbol) {
+            try {
+                const url = CORS_PROXY + YAHOO_BASE + symbol + '?interval=1d&range=1d';
+                const response = await fetch(url);
+                const data = await response.json();
+                const meta = data.chart.result[0].meta;
+
+                return {
+                    price: meta.regularMarketPrice.toFixed(2),
+                    change: meta.regularMarketChange.toFixed(2),
+                    changePercent: meta.regularMarketChangePercent.toFixed(2),
+                    isClosed: meta.regularMarketChange === 0
+                };
+            } catch (err) {
+                return null;
+            }
         }
 
         async function loadGroup(group, containerId) {
             const container = document.getElementById(containerId);
 
             for (const t of group) {
-                try {
-                    const data = await fetchQuote(t.symbol);
+                const priceData = await fetchPrice(t.symbol);
 
-                    const div = document.createElement('div');
-                    div.className = 'item';
+                const div = document.createElement('div');
+                div.className = 'item';
 
-                    if (!data || typeof data !== 'object' || data.c <= 0) {
-                        div.innerHTML = `
-                            <div class="name">${t.name}</div>
-                            <div class="price unsupported">No data available</div>
-                        `;
-                    } else {
-                        const price = data.c.toFixed(2);
-                        let changeText = 'Market closed';
-                        let changeClass = 'closed';
-
-                        if (data.d !== 0 || data.dp !== 0) {
-                            const change = data.d.toFixed(2);
-                            const pct = data.dp.toFixed(2);
-                            changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
-                            changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : 'closed';
-                        }
-
-                        div.innerHTML = `
-                            <div class="name">${t.name}</div>
-                            <div class="price">$${price}</div>
-                            <div class="change \( {changeClass}"> \){changeText}</div>
-                        `;
-                    }
-                    container.appendChild(div);
-                } catch (err) {
-                    const div = document.createElement('div');
-                    div.className = 'item';
+                if (!priceData) {
                     div.innerHTML = `
                         <div class="name">${t.name}</div>
-                        <div class="price unsupported">Error fetching</div>
+                        <div class="price unsupported">No data</div>
                     `;
-                    container.appendChild(div);
+                } else {
+                    let changeText = 'Market closed';
+                    let changeClass = 'closed';
+
+                    if (!priceData.isClosed) {
+                        const change = priceData.change;
+                        const pct = priceData.changePercent;
+                        changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
+                        changeClass = change > 0 ? 'positive' : 'negative';
+                    }
+
+                    div.innerHTML = `
+                        <div class="name">${t.name}</div>
+                        <div class="price">$${priceData.price}</div>
+                        <div class="change \( {changeClass}"> \){changeText}</div>
+                    `;
                 }
+                container.appendChild(div);
             }
         }
 
