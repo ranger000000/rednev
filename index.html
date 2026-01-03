@@ -7,7 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f4; color: #333; margin: 20px; text-align: center; }
         h1 { font-size: 2em; margin-bottom: 30px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px; }
         .item { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .name { font-weight: bold; font-size: 1.1em; }
         .price { font-size: 1.8em; margin: 10px 0; }
@@ -21,17 +21,17 @@
     </style>
 </head>
 <body>
-    <h1>Live Silver Miners Dashboard (Reliable US Tickers)</h1>
-    <div id="loading">Loading tickers one by one...</div>
+    <h1>Live Silver Miners Dashboard (Finnhub Free Tier)</h1>
+    <div id="loading">Starting load...</div>
 
-    <div class="grid" id="tickers"></div>
+    <div class="grid" id="grid"></div>
 
     <div id="last-update"></div>
 
     <script>
         const API_KEY = 'd5c4j1hr01qsbmgih120d5c4j1hr01qsbmgih12g';  // Your key
 
-        const reliableTickers = [
+        const tickers = [
             {symbol: 'PAAS', name: 'Pan American Silver (PAAS)'},
             {symbol: 'HL', name: 'Hecla Mining (HL)'},
             {symbol: 'CDE', name: 'Coeur Mining (CDE)'},
@@ -42,43 +42,49 @@
             {symbol: 'VZLA', name: 'Vizsla Silver (VZLA)'},
             {symbol: 'USAS', name: 'Americas Gold & Silver (USAS)'},
             {symbol: 'ASM', name: 'Avino Silver & Gold (ASM)'},
-            {symbol: 'AAPL', name: 'Apple Test (AAPL)'}
+            {symbol: 'SILG.L', name: 'SILG.L (Global X Silver Miners UCITS)'},
+            {symbol: 'SLVR', name: 'SLVR (Sprott Silver Miners & Physical)'},
+            {symbol: 'FRES.L', name: 'Fresnillo (FRES.L)'},
+            {symbol: 'HOC.L', name: 'Hochschild Mining (HOC.L)'},
+            {symbol: 'DSV.TO', name: 'Discovery Silver (DSV.TO)'},
+            {symbol: 'SCZ.V', name: 'Santacruz Silver (SCZ.V)'},
+            {symbol: 'ABRA.V', name: 'AbraSilver (ABRA.V)'},
+            {symbol: 'GGD.TO', name: 'GoGold Resources (GGD.TO)'},
+            {symbol: 'AYA.TO', name: 'Aya Gold & Silver (AYA.TO)'},
+            {symbol: 'DV.V', name: 'Dolly Varden Silver (DV.V)'},
+            {symbol: 'CKG.V', name: 'Chesapeake Gold (CKG.V)'},
+            {symbol: 'JAG.TO', name: 'Jaguar Mining (JAG.TO)'},
+            {symbol: 'AAPL', name: 'Apple Test (AAPL)'}  // Test ticker
         ];
 
-        const container = document.getElementById('tickers');
-        const loadingEl = document.getElementById('loading');
-
-        function fetchWithTimeout(url, timeout = 10000) {
-            return Promise.race([
-                fetch(url),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
-            ]);
-        }
+        const grid = document.getElementById('grid');
+        const loading = document.getElementById('loading');
 
         async function loadTicker(t) {
-            loadingEl.textContent = `Loading ${t.symbol}...`;
+            loading.textContent = `Loading ${t.symbol}...`;
 
             try {
-                const response = await fetchWithTimeout(`https://finnhub.io/api/v1/quote?symbol=\( {t.symbol}&token= \){API_KEY}`);
+                const url = `https://finnhub.io/api/v1/quote?symbol=\( {t.symbol}&token= \){API_KEY}`;
+                const response = await fetch(url);
                 const data = await response.json();
-                console.log(`Data for ${t.symbol}:`, data);  // Debug in console
+                console.log(`${t.symbol}:`, data);  // Check console for raw response
 
                 const div = document.createElement('div');
                 div.className = 'item';
 
-                if (!data || data.c <= 0) {
+                if (!data || typeof data !== 'object' || !data.c || data.c <= 0) {
                     div.innerHTML = `
                         <div class="name">${t.name}</div>
-                        <div class="price unsupported">Unsupported or no data</div>
+                        <div class="price unsupported">Unsupported on free tier</div>
                     `;
                 } else {
                     const price = data.c.toFixed(2);
                     let changeText = 'Market closed';
                     let changeClass = 'closed';
 
-                    if (data.d !== 0 || data.dp !== 0) {
-                        const change = (data.d || 0).toFixed(2);
-                        const pct = (data.dp || 0).toFixed(2);
+                    if (data.d && data.dp && (data.d !== 0 || data.dp !== 0)) {
+                        const change = data.d.toFixed(2);
+                        const pct = data.dp.toFixed(2);
                         changeText = `\( {change > 0 ? '+' : ''} \){change} (\( {pct > 0 ? '+' : ''} \){pct}%)`;
                         changeClass = data.d > 0 ? 'positive' : data.d < 0 ? 'negative' : 'closed';
                     }
@@ -89,33 +95,33 @@
                         <div class="change \( {changeClass}"> \){changeText}</div>
                     `;
                 }
-                container.appendChild(div);
+                grid.appendChild(div);
             } catch (err) {
                 console.error(`Error for ${t.symbol}:`, err);
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `
                     <div class="name">${t.name}</div>
-                    <div class="price unsupported">Error: ${err.message}</div>
+                    <div class="price unsupported">Network error</div>
                 `;
-                container.appendChild(div);
+                grid.appendChild(div);
             }
         }
 
-        async function loadDashboard() {
-            loadingEl.style.display = 'block';
-            container.innerHTML = '';
+        async function loadAll() {
+            grid.innerHTML = '';
+            loading.textContent = 'Starting...';
 
-            for (const t of reliableTickers) {
+            for (const t of tickers) {
                 await loadTicker(t);
             }
 
-            loadingEl.style.display = 'none';
+            loading.style.display = 'none';
             document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleString()}`;
         }
 
-        loadDashboard();
-        setInterval(loadDashboard, 60000);  // Refresh every minute
+        loadAll();
+        setInterval(loadAll, 60000);
     </script>
 </body>
 </html>
